@@ -11,6 +11,7 @@ import java.net.URL;
 import java.util.NoSuchElementException;
 import java.util.ResourceBundle;
 import java.util.Scanner;
+
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -139,7 +140,7 @@ public class Client extends Application implements Initializable {
         try {
           System.out.println("Client closed");
           if (!hasExited) {
-            writeData();
+            writeData(accountNumber, winNum, loseNum, tieNum);
           }
           hasExited = true;
           System.exit(0);
@@ -175,13 +176,14 @@ public class Client extends Application implements Initializable {
       client = new Socket("localhost", PORT);
       out = new PrintWriter(client.getOutputStream(), true);
       in = new Scanner(client.getInputStream());
+      out.printf("%s %d %d %d\n", accountNumber, winNum, loseNum, tieNum);
       Communicate communicate = new Communicate();
       Thread t = new Thread(communicate);
       t.start();
     } catch (ConnectException e) {
       System.out.println("Server has not started, client will close automatically");
       try {
-        writeData();
+        writeData(accountNumber, winNum, loseNum, tieNum);
       } catch (IOException ex) {
         throw new RuntimeException(ex);
       }
@@ -204,7 +206,7 @@ public class Client extends Application implements Initializable {
         try {
           if (!hasExited) {
             System.out.println("Server has closed");
-            writeData();
+            writeData(accountNumber, winNum, loseNum, tieNum);
             out.println("CLOSE");
             client.close();
             hasExited = true;
@@ -226,25 +228,25 @@ public class Client extends Application implements Initializable {
         case "EXIT":
           System.out.println("Your opponent disconnect, you win");
           hasExited = true;
-          writeData();
+          writeData(accountNumber, winNum, loseNum, tieNum);
           return;
         case "WIN":
           System.out.println("You win.");
           winNum++;
           hasExited = true;
-          writeData();
+          writeData(accountNumber, winNum, loseNum, tieNum);
           return;
         case "LOSE":
           System.out.println("You lose.");
           loseNum++;
           hasExited = true;
-          writeData();
+          writeData(accountNumber, winNum, loseNum, tieNum);
           return;
         case "TIE":
           System.out.println("Tie.");
           tieNum++;
           hasExited = true;
-          writeData();
+          writeData(accountNumber, winNum, loseNum, tieNum);
           return;
         case "GO":
           canGo = true;
@@ -285,8 +287,13 @@ public class Client extends Application implements Initializable {
     String accountNumberInput;
     System.out.print("Please enter your account number: ");
     accountNumberInput = in.next();
-    while (checkAccount(accountNumberInput) == 3 || checkAccount(accountNumberInput) == 4) {
+    int i = checkAccount(accountNumberInput);
+    while (i == 3 || i == 4) {
+      System.out.print(i == 3 ?
+          "This account has login, please input another account: " :
+          "Account number can only consists of digital numbers, please input legal number: ");
       accountNumberInput = in.next();
+      i = checkAccount(accountNumberInput);
     }
     System.out.println("Login successfully");
   }
@@ -346,7 +353,7 @@ public class Client extends Application implements Initializable {
     writer.close();
   }
 
-  public synchronized static void writeData() throws IOException {
+  public synchronized static void writeData(String accountNumber, int winNum, int loseNum, int tieNum) throws IOException {
     BufferedReader reader = new BufferedReader(new FileReader("src\\account.txt"));
     String line;
     StringBuilder data = new StringBuilder();
@@ -366,7 +373,7 @@ public class Client extends Application implements Initializable {
   public static void main(String[] args) throws IOException {
     login();
     launch(args);
-    writeData();
+    writeData(accountNumber, winNum, loseNum, tieNum);
     client.close();
   }
 }

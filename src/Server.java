@@ -15,6 +15,11 @@ public class Server {
   private static ServerSocket serverSocket;
   private static Socket waitingServer;
   private static final int PORT = 8999;
+  private static String waitingAccount;
+  private static int waitingWinNum;
+  private static int waitingLoseNum;
+  private static int waitingTieNum;
+
 
   private static boolean needWaiting;
 
@@ -34,6 +39,11 @@ public class Server {
       if (needWaiting || waitingServer == null) {
         waitingServer = server;
         needWaiting = false;
+        Scanner in = new Scanner(server.getInputStream());
+        waitingAccount = in.next();
+        waitingWinNum = in.nextInt();
+        waitingLoseNum = in.nextInt();
+        waitingTieNum = in.nextInt();
         PrintWriter out = new PrintWriter(server.getOutputStream());
         out.println("WAIT");
         out.flush();
@@ -50,6 +60,7 @@ public class Server {
           needWaiting = true;
         } catch (NoSuchElementException e) {
           System.out.println("Waiting client has closed, need to wait for a new one");
+          Client.writeData(waitingAccount, waitingWinNum, waitingLoseNum, waitingTieNum);
           waitingServer = server;
           needWaiting = false;
           PrintWriter out = new PrintWriter(server.getOutputStream());
